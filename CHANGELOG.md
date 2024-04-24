@@ -3,3 +3,4 @@
 ## [0.1.0] - 2024-04-24
 
 - Initial release
+- Send Legacy push notifications.
