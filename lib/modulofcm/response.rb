@@ -12,7 +12,7 @@ module Modulofcm
       @body = body
     end
 
-    def succcess? = success
+    def success? = success
 
   end
 
