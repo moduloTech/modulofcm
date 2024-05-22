@@ -20,9 +20,14 @@ Modulofcm.configure do |config|
     client.api_key = 'My Legacy HTTP API key - will cease to function after June 2024.'
   end
 
-  config.client(:new_client) do |client|
-    client.api_token = 'my_token'
-    client.google_application_credentials_path = ''
+  config.client(:api_v1_client) do |client|
+    client.firebase_project_id = 'Firebase Project id'
+    client.google_application_credentials = '{"type": "service_account", "project_id": "...", ...}'
+  end
+
+  config.client(:another_api_v1_client) do |client|
+    client.firebase_project_id = 'Firebase Project id'
+    client.google_application_credentials_path = 'config/google_application_credentials.json'
   end
 end
 
@@ -30,7 +35,11 @@ end
 data = {
   id: 232_342,
   key: 'asd9adfiu6bn',
-  mission_id: 234_323
+  mission_id: 234_323,
+  data: {
+    user_id: 15_123,
+    company_id: 23_341
+  }
 }
 
 # All keyword arguments are optional and references a field in Firebase documentation:
@@ -54,8 +63,9 @@ data = {
 #  data: Arbitrary key/value payload, which must be UTF-8 encoded. The key should not be a reserved word ("from", "message_type", or any word starting with "google" or "gcm").
 #    Legacy: `data`
 #    APIv1: `message.data`
-Modulofcm.client(:legacy_client).push('Legacy device registration token', data: data, title: 'My title', body: 'The body', sound: 'notif.caf', content_available: true)
-Modulofcm.client(:new_client).push('FCM new token', data: data, title: 'My title', body: 'The body', sound: 'notif.caf', content_available: true)
+Modulofcm.client(:legacy_client).push('Registration token', data: data, title: 'My title', body: 'The body', sound: 'notif.caf', content_available: true)
+Modulofcm.client(:api_v1_client).push('Registration token', data: data, title: 'My title', body: 'The body', sound: 'notif.caf', content_available: true)
+Modulofcm.client(:another_api_v1_client).push('Registration token', data: data, title: 'My title', body: 'The body', sound: 'notif.caf', content_available: true)
 ```
 
 ## Development

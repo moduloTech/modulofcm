@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative 'file_i_o'
 require_relative 'response'
 
 # rubocop:disable Metrics/ParameterLists
@@ -7,14 +8,15 @@ module Modulofcm
 
   class Client
 
-    attr_reader :name, :api_key, :api_token, :google_application_credentials_path, :firebase_project_id, :mode
+    attr_reader :name, :api_key, :google_application_credentials, :firebase_project_id, :mode
 
-    def initialize(name:, api_key: nil, api_token: nil, google_application_credentials_path: nil,
+    def initialize(name:, api_key: nil,
+                   google_application_credentials_path: nil, google_application_credentials: nil,
                    firebase_project_id: nil)
       @name = name.to_sym
       @api_key = api_key
-      @api_token = api_token
       @google_application_credentials_path = google_application_credentials_path
+      @google_application_credentials = google_application_credentials
       @firebase_project_id = firebase_project_id
       @mode = :api_v1
     end
@@ -49,12 +51,13 @@ module Modulofcm
       when :legacy
         push_legacy(token, data: data, title: title, body: body, sound: sound, content_available: content_available)
       else
-        raise NotImplementedError, 'Only Legacy notifications are supported'
-        # push_v1(token, data: data, title: title, body: body, sound: sound, content_available: content_available)
+        push_v1(token, data: data, title: title, body: body, sound: sound, content_available: content_available)
       end
     end
 
-    %w[api_key api_token firebase_project_id google_application_credentials_path].each do |attribute|
+    %w[
+        api_key firebase_project_id google_application_credentials_path google_application_credentials
+      ].each do |attribute|
       define_method("#{attribute}=") do |value|
         instance_variable_set(:"@#{attribute}", value)
 
@@ -62,10 +65,24 @@ module Modulofcm
       end
     end
 
+    def google_application_credentials_path
+      if @google_application_credentials_path.present? || @google_application_credentials.blank?
+        return @google_application_credentials_path
+      end
+
+      @google_application_credentials_path = if @google_application_credentials.is_a?(String)
+                                               FileIO.new(@google_application_credentials, 'creds.json')
+                                             elsif @google_application_credentials.respond_to?(:to_json)
+                                               FileIO.new(@google_application_credentials.to_json, 'creds.json')
+                                             else
+                                               @google_application_credentials
+                                             end
+    end
+
     private
 
     def update_mode
-      api_v1_fields_all_present = [api_token, google_application_credentials_path, firebase_project_id].all?(&:present?)
+      api_v1_fields_all_present = [google_application_credentials_path, firebase_project_id].all?(&:present?)
       api_key_blank = api_key.blank?
 
       @mode = if api_v1_fields_all_present || api_key_blank
@@ -78,7 +95,7 @@ module Modulofcm
                 when :legacy
                   FCM.new(api_key)
                 else
-                  FCM.new(api_token, google_application_credentials_path, firebase_project_id)
+                  FCM.new('', google_application_credentials_path, firebase_project_id)
                 end
     end
 
@@ -98,6 +115,16 @@ module Modulofcm
       handle_data(payload, data)
       handle_notification(payload, body, sound, title)
 
+      # According to Firebase documentation, all values must be strings. So all hashes/arrays are JSON-ified and other
+      # fields (including numbers) are converted to strings.
+      payload[:data].transform_values! do |value|
+        if value.is_a?(Hash) || value.is_a?(Array)
+          value.to_json
+        else
+          value.to_s
+        end
+      end
+
       make_v1_response(@client.send_v1(payload))
     end
 
@@ -110,9 +137,11 @@ module Modulofcm
       else
         {
           android: {},
-          apns:    {
-            aps: {
-              'content-available' => content_available ? 1 : 0
+          apns: {
+            payload: {
+              aps: {
+                'content-available' => content_available ? 1 : 0
+              }
             }
           }
         }
@@ -143,7 +172,7 @@ module Modulofcm
       when :legacy
         payload[:notification][:sound] = value
       else
-        payload[:apns][:aps][:sound] = value
+        payload[:apns][:payload][:aps][:sound] = value
         payload[:android][:sound] = value
       end
     end
@@ -155,7 +184,7 @@ module Modulofcm
     def make_v1_response(response)
       response_body = JSON.parse(response[:body])
 
-      Response.new(success: response_body['message'].present?,
+      Response.new(success: response[:response] == 'success',
                    status: response[:status_code], body: response_body)
     end
 

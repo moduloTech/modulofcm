@@ -38,14 +38,14 @@ module Modulofcm
 
       @errors << 'Required field: name' if client.name.blank?
 
-      if [client.google_application_credentials_path, client.api_token, client.firebase_project_id].all?(&:present?)
+      if [client.google_application_credentials_path, client.firebase_project_id].all?(&:present?)
         return [@errors.empty?, @errors]
       end
 
       return [@errors.empty?, @errors] if client.api_key.present?
 
       # rubocop:disable Layout/LineLength
-      @errors << 'Either an API key for Legacy API (deprecated) either the API token, the Google application credentials path and the Firebase project id are required'
+      @errors << 'Either an API key for Legacy API (deprecated) either the Google application credentials and the Firebase project id are required'
       # rubocop:enable Layout/LineLength
 
       [false, @errors]
