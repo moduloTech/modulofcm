@@ -38,7 +38,7 @@ module Modulofcm
 
       @errors << 'Required field: name' if client.name.blank?
 
-      if [client.google_application_credentials_path, client.api_token, client.firebase_project_id].all?(:present?)
+      if [client.google_application_credentials_path, client.api_token, client.firebase_project_id].all?(&:present?)
         return [@errors.empty?, @errors]
       end
 
