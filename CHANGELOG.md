@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+## [1.1.0] - 2024-05-23
+
+- Send Android notifications with priority high
+
 ## [1.0.0] - 2024-05-22
 
 - Implement API v1
