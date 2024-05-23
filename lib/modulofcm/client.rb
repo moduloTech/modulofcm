@@ -136,7 +136,9 @@ module Modulofcm
         }
       else
         {
-          android: {},
+          android: { 
+            priority: "high" 
+          },
           apns: {
             payload: {
               aps: {
