@@ -117,7 +117,7 @@ module Modulofcm
 
       # According to Firebase documentation, all values must be strings. So all hashes/arrays are JSON-ified and other
       # fields (including numbers) are converted to strings.
-      payload[:data].transform_values! do |value|
+      payload[:data]&.transform_values! do |value|
         if value.is_a?(Hash) || value.is_a?(Array)
           value.to_json
         else
