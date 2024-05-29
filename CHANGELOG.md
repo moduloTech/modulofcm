@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+## [1.1.0.1] - 2024-05-29
+
+- Prevent NPE on nil `data`
+- Fix sound for Android
+
 ## [1.1.0] - 2024-05-23
 
 - Send Android notifications with priority high
