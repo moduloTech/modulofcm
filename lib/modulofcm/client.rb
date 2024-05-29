@@ -136,8 +136,8 @@ module Modulofcm
         }
       else
         {
-          android: { 
-            priority: "high" 
+          android: {
+            priority: "high"
           },
           apns: {
             payload: {
@@ -175,7 +175,7 @@ module Modulofcm
         payload[:notification][:sound] = value
       else
         payload[:apns][:payload][:aps][:sound] = value
-        payload[:android][:sound] = value
+        payload[:android][:notification] = { sound: value }
       end
     end
 
